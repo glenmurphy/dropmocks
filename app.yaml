@@ -1,0 +1,15 @@
+application: dropmocks
+version: 1
+runtime: python
+api_version: 1
+
+derived_file_type:
+- python_precompiled
+
+
+handlers:
+- url: /s
+  static_dir: source/files
+
+- url: /.*
+  script: source/main.py

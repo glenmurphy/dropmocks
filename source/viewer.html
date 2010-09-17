@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>DropMocks</title>
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<link rel="shortcut icon" href="/s/favicon.png" /> 
+<link rel="stylesheet" type="text/css" href="/s/editor.css" />
+<link rel="stylesheet" type="text/css" href="/s/presenter.css" />
+<link rel="stylesheet" type="text/css" href="/s/viewer.css" />
+<link rel="stylesheet" type="text/css" href="/s/introduction.css" />
+<script src="/s/functions.js"></script>
+<script src="/s/mocklist.js"></script>
+<script src="/s/mock.js"></script>
+<script src="/s/menu.js"></script>
+<script src="/s/presenter.js"></script>
+<script src="/s/editor.js"></script>
+<script src="/s/introduction.js"></script>
+<script>
+// If you're poking around looking to figure out how to hotlink images, sorry -
+// we try to prevent that. If you think our choice is bone-headed, please email.
+
+var throbber;
+function load() {
+  var mockdata = {{ json }};
+  var mocklist = MockList.fromJSON(mockdata);
+  var presenter = new Presenter(mocklist, document.body);
+  var show_editor = isValidBrowser() || (BrowserDetect.browser == "Safari" && BrowserDetect.version <= 5);
+  var editor = (mockdata.key && show_editor) ? new Editor(mocklist) : null;
+  var menu = new Menu(mocklist, {{ user }});
+
+  mocklist.addListener(function(e) {
+    if (e.type == MockList.EVENT_MOCKLOADED) {
+      $('loading').style.opacity = 0;
+      $('message').style.top = 60;
+      setText($('message_text'), "Still loading");
+    } else if (e.type == MockList.EVENT_ALLMOCKSLOADED) {
+      clearInterval(throbber);
+      setTimeout(function() {
+        $('loading').style.opacity = 0;
+        $('message').style.opacity = 0;
+        $('message').style.top = '0px';
+        setTimeout(function() {
+          $('loading').style.display = 'none';
+          }, 700);
+        }, 300);
+    }
+  });
+  
+  $('message').style.opacity = 1;
+  $('message').style.top = '50%';
+  throbber = setInterval(function() {
+    var len = ($('throbber').innerHTML.length + 1) % 4;
+    var str = '';
+    for (var i = 0; i < len; i++) {
+      str += '.';
+    }
+    $('throbber').innerHTML = str;
+  }, 500);
+}
+</script>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-18063845-1']);
+  _gaq.push(['_setDomainName', '.dropmocks.com']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+<body onload="load();">
+<iframe src="about:blank" class="manual-iframe" name="image_iframe" id="image_iframe"></iframe>
+<div id="loading"></div>
+<div id="message"><span id="message_text">Loading</span><span id="throbber">...</span></div>
+</body>
+</html>

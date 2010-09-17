@@ -1,0 +1,175 @@
+.dm-editor {
+  display:none;
+  position:absolute;
+  z-index:1000;
+  right:10px;
+  top:10px;
+  width:210px;
+  background-color:white;
+  font-family:helvetica, arial, sans-serif;
+  font-size:12px;
+  border:1px solid rgba(0,0,0,0.5);
+  -webkit-transition:all 0.2s;
+  -webkit-box-shadow:1px 1px 12px rgba(0,0,0,0.25);
+}
+.dm-editor.collapsed {
+  top:-1px;
+  right:10px;
+  border-radius:0px 0px 4px 4px;
+}
+.dm-editor .title {
+  padding:6px;
+  font-size:14px;
+  position:relative;
+}
+.dm-editor .listname {
+  cursor:pointer;
+  width:180px;
+}
+.title .delete {
+  position:absolute;
+  right:6px;
+  top:50%;
+  margin-top:-8px;
+  display:inline;
+  background-image:url(/s/delete.png);
+  background-position:-16 0;
+  background-repeat:no-repeat;
+  overflow:hidden;
+  width:16px;
+  height:16px;
+  cursor:pointer;
+}
+.title .delete:hover {
+  background-position:-16 -16;
+}
+.dm-editor .listname:hover {
+  background-color:#fff9c2;
+}
+.dm-editor .body {
+  display:block;
+}
+
+.dm-editor.collapsed .body {
+  display:none;
+}
+
+.dm-editor .filelist {
+  padding-top:6px;
+  border-top:1px solid #ddd;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.dm-editor .file {
+  padding:4px 6px 4px 8px;
+  background-color:white;
+  display:block;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor:pointer;
+}
+.file .name {
+  float:left;
+  width:180px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file .delete {
+  display:inline;
+  float:right;
+  background-image:url(/s/delete.png);
+  background-position:0 0;
+  background-repeat:no-repeat;
+  overflow:hidden;
+  width:16px;
+  height:16px;
+}
+.file .delete:hover {
+  background-position:0 -16;
+}
+.file.selected {
+  /*background:-webkit-gradient(linear, left top, left bottom, from(#3399ff), to(#0f6bc8));*/
+  background-color:#3399ff;
+  color:white;
+  font-weight:bold;
+  text-shadow:1px 1px 1px rgba(0,0,0,0.35);
+}
+.dm-editor .insert-indicator {
+  position:absolute;
+  display:none;
+  height:1px;
+  left:0px;
+  width:210px;
+  margin-top:-1px;
+  background-color:#000;
+  z-index:1000;
+  pointer-events:none;
+}
+
+.dm-editor-status {
+  font-family:helvetica, arial, sans-serif;
+  background-color:rgba(0, 0, 0, 0.8);
+  color:white;
+  border-radius:4px;
+  z-index:2000;
+  pointer-events:none;
+  width:200px;
+  padding:10px;
+
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  margin-left:-110px;
+  opacity:0;
+
+  -webkit-transition:all 0.2s;
+  -moz-transition:all 0.2s;
+}
+.manual {
+  padding:6px;
+  margin:0px;
+  border-top:1px solid #ddd;
+}
+.manual-safari {
+  padding:6px;
+  margin:0px;
+  border-top:1px solid #ddd;
+}
+.manual-iframe {
+  display:none;
+}
+.dm-editor-error {
+  font-family:helvetica, arial, sans-serif;
+  background-color:rgba(128, 0, 0, 0.8);
+  color:white;
+  border-radius:4px;
+  z-index:2000;
+  width:300px;
+  padding:10px;
+
+  position:absolute;
+  top:50%;
+  left:50%;
+  margin-left:-160px;
+  margin-top:-80px;
+
+  -webkit-transition:all 0.2s;
+  -moz-transition:all 0.2s;
+}
+
+.dm-editor-error h1 {
+  margin:0px;
+}
+.dm-editor-error input {
+  margin-top:12px;
+  width:100px;
+}
+.dm-editor .access-url {
+  margin-top:5px;
+  padding:6px;
+  border-top:1px solid #ddd;
+}
