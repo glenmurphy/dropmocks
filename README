@@ -6,27 +6,4 @@ Copyright © 2010 Glen Murphy (http://glenmurphy.com/)
 ABOUT
 -------------------------------------------------------------------------------
 
-Dropmocks is a simple image sharing service.
-
-
--------------------------------------------------------------------------------
-DEPLOYMENT
--------------------------------------------------------------------------------
-
-To deploy this on App Engine, you can use the following app.yaml:
-
-application: [YOURNAME]
-version: 1
-runtime: python
-api_version: 1
-
-derived_file_type:
-- python_precompiled
-
-
-handlers:
-- url: /s
-  static_dir: source/files
-
-- url: /.*
-  script: source/main.py
+Dropmocks is a simple image sharing service built on app engine.
