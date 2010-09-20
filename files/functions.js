@@ -162,6 +162,7 @@ function isValidBrowser() {
 
   return (
     (browser == 'Chrome' && version >= 6) ||
-    (browser == 'Firefox' && version >= 3.6)
+    (browser == 'Firefox' && version >= 3.6) ||
+    ("FileReader" in self && "ondrag" in document)
   );
 }

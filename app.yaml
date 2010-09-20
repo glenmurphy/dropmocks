@@ -9,7 +9,7 @@ derived_file_type:
 
 handlers:
 - url: /s
-  static_dir: ./files
+  static_dir: files
 
 - url: /.*
   script: main.py
