@@ -27,8 +27,10 @@ function Menu(mocklist, user) {
     this.node_sign_.href = this.sign_out_url_;
     setText(this.node_sign_, "Sign out");
   } else {
-    this.node_sign_ = createElement('a', 'menuitem', this.node_);
+    this.node_sign_ = createElement('a', 'menuitem button', this.node_);
     this.node_sign_.href = this.sign_in_url_;
+
+    this.node_new_.className = 'menuitem button';
     setText(this.node_sign_, "Sign in");
   }
 
