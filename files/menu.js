@@ -67,11 +67,13 @@ Menu.prototype.getMockListById = function(id) {
 Menu.prototype.update_ = function() {
   window.console.log("Menu updating");
   
-  this.node_new_.style.display = (this.page_mocklist_.id) ? 'inline' : 'none';
+  this.node_new_.style.display = (this.page_mocklist_.id) ? 'inline-block' : 'none';
   if (this.signed_in_ || this.page_mocklist_.key) {
     setText(this.node_new_, 'New');
+    this.node_sign_.style.display = 'inline-block';
   } else {
     setText(this.node_new_, 'Create a DropMocks gallery');
+    this.node_sign_.style.display = 'none';
   }
 
   this.node_menu_.options.length = 1;
@@ -82,7 +84,7 @@ Menu.prototype.update_ = function() {
     this.node_menu_.options[this.node_menu_.length] = opt;
   }
 
-  this.node_menu_.style.display = (this.mocklists_.length) ? 'inline' : 'none';
+  this.node_menu_.style.display = (this.mocklists_.length) ? 'inline-block' : 'none';
 }
 
 Menu.prototype.menuChanged_ = function() {
