@@ -9,6 +9,7 @@ function Menu(mocklist, user) {
   this.sign_in_url_ = user.sign_in_url;
   this.sign_out_url_ = user.sign_out_url;
 
+  // Edit controls (right side).
   this.node_ = createElement('div', 'home', document.body);
 
   this.node_new_ = createElement('a', 'menuitem', this.node_);
@@ -33,6 +34,18 @@ function Menu(mocklist, user) {
     this.node_new_.className = 'menuitem button';
     setText(this.node_sign_, "Sign in");
   }
+
+  // Sharing bar (left side).
+  this.node_share_ = createElement('div', 'sharebar', document.body);
+
+  // TODO: Defer this until after page load.
+  this.node_tweet_ = createElement('div', '', this.node_share_);
+  this.node_tweet_.innerHTML = '<a href="http://twitter.com/share" class="twitter-share-button" data-text="I liked this gallery on dropmocks:" data-count="none">Share on Twitter</a>';
+
+  var twitter_script = document.createElement('script');
+  twitter_script.src = 'http://platform.twitter.com/widgets.js';
+  twitter_script.defer = true;
+  this.node_share_.appendChild(twitter_script);
 
   this.update_();
 }
@@ -68,6 +81,8 @@ Menu.prototype.update_ = function() {
   window.console.log("Menu updating");
   
   this.node_new_.style.display = (this.page_mocklist_.id) ? 'inline-block' : 'none';
+  this.node_share_.style.display = (this.page_mocklist_.id) ? 'block' : 'none';
+
   if (this.signed_in_ || this.page_mocklist_.key) {
     setText(this.node_new_, 'New');
     this.node_sign_.style.display = 'inline-block';
