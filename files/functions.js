@@ -2,7 +2,7 @@ function $(o) {return document.getElementById(o);}
 Function.prototype.bind = function(thisObj, var_args) {
   var self = this;
   var staticArgs = Array.prototype.splice.call(arguments, 1, arguments.length);
-
+  
   return function() {
     var args = staticArgs.concat();
     for (var i = 0; i < arguments.length; i++) {
@@ -14,6 +14,7 @@ Function.prototype.bind = function(thisObj, var_args) {
 
 function createElement(type, className, parent) {
   var el = document.createElement(type);
+  document.
   el.className = className;
   if (parent) parent.appendChild(el);
   return el;

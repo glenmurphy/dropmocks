@@ -5,7 +5,7 @@ function Presenter(mocklist, parent_node) {
 
   this.node_ = createElement('div', 'presentation', parent_node);
   this.scene_ = createElement('div', 'scene', this.node_);
-
+  
   // FF didn't like addEventListener, also brain dead.
   window.onresize = this.layout.bind(this);
   document.onkeydown = this.keyDown.bind(this);

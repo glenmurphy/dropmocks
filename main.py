@@ -1,4 +1,5 @@
 import os, sys
+from google.appengine.api.labs import taskqueue
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
@@ -62,7 +63,8 @@ class MockList(db.Model):
   mock_names_cache = db.ListProperty(str, default=[])
   date = db.DateTimeProperty(auto_now_add=True)
   views = db.IntegerProperty(default=0)
-  last_viewed = date = db.DateTimeProperty()
+  last_viewed = db.DateTimeProperty()
+  last_processed = db.DateTimeProperty(default=0)
 
   def get_id(self):
     return id_encode(self.key().id())
@@ -141,7 +143,6 @@ def getOwnerDetails(handler, owner):
       'signed_in' : False,
     }
 
-
 def cacheMockNames(mocklist):
   mock_names = []
   for mid in mocklist.mocks:
@@ -182,8 +183,13 @@ class View(webapp.RequestHandler):
       })
       i = i + 1
 
+    if mocklist.name:
+      name = mocklist.name.encode('utf-8')
+    else:
+      name = ''
+
     mocklistdata = {
-      'name' : str(mocklist.name),
+      'name' : name,
       'id' : str(mocklist.get_id()),
       'description' : str(mocklist.description),
       'mocks' : mocks,
@@ -386,6 +392,76 @@ class SignIn(webapp.RequestHandler):
     else:
       users.create_login_url("/signin/")
 
+class UpdateModel(webapp.RequestHandler):
+  def get(self):
+    id = MockList.gql('ORDER BY edit_key DESC').get().key()
+    # taskqueue.add(url="/admin/updatemodel/", params={'id': id})
+    self.response.out.write("Processing started")
+
+  def post(self):
+    id = self.request.get("id")
+
+    mocklists = MockList.gql("WHERE edit_key <= :1 ORDER BY edit_key DESC LIMIT 200", id)
+    lastid = None
+    count = 1
+    for mocklist in mocklists:
+      lastid = mocklist.edit_key
+      mocklist.put()
+      count += 1
+
+    if count >= 199:
+      pass
+      # taskqueue.add(url="/admin/updatemodel/", params={'id': lastid})
+
+class ProcessVisits(webapp.RequestHandler):
+  def get(self):
+    limit = 50
+
+    now = datetime.datetime.now()
+
+    day = now - datetime.timedelta(days=1)
+    week = now - datetime.timedelta(days=7)
+    month = now - datetime.timedelta(days=30)
+
+    mocklists = MockList.gql("WHERE last_processed < :1 LIMIT %d" % limit, day)
+
+    listcount = 0
+    for mocklist in mocklists:
+      listcount += 1
+      count = MockListView.gql("WHERE mocklist = :1", mocklist).count()
+      mocklist.count = count
+      if count > 0:
+        mocklist.last_viewed = MockListView.gql("WHERE mocklist = :1 ORDER BY date DESC", mocklist).get().date
+      else:
+        mocklist.last_viewed = None
+      mocklist.last_processed = now
+      mocklist.put()
+
+      self.response.out.write("Mocklist %s<br />" % mocklist.get_id())
+      if mocklist.owner:
+        self.response.out.write("Owner: %s - %s - %s - %s<br />" % (mocklist.owner.user_id, mocklist.owner.hobo_id, mocklist.owner.email, mocklist.owner.lastseen))
+      else:
+        self.response.out.write("Owner: none<br />")
+      self.response.out.write("Viewed: %s<br />" % count)
+      self.response.out.write("Created: %s (%s)<br />" % (mocklist.date, now - mocklist.date))
+
+      if mocklist.last_viewed != None: 
+        self.response.out.write("Last Viewed: %s (%s)<br />" % (mocklist.last_viewed, now - mocklist.last_viewed))
+      else:
+        self.response.out.write("Last Viewed: Never<br />")
+
+      if not (mocklist.owner and mocklist.owner.email):
+        if (mocklist.date < week and mocklist.last_viewed == None) or (mocklist.last_viewed and mocklist.last_viewed < month):
+          taskqueue.add(url="/admin/delete/?id=%s" % mostlist.get_id(), method='GET')
+          self.response.out.write("GONNA BE DELETED!<br />")
+
+      self.response.out.write("<br />")
+
+    if listcount >= limit:
+      self.response.out.write("MORE TO GO")
+      # We reached the end. Continue onwards!
+      # taskqueue.add(url="/admin/processvisits/", method='GET')
+
 application = webapp.WSGIApplication([
   (r'/m(.*)', View),
   (r'/i(.*)', ViewMock),
@@ -397,6 +473,8 @@ application = webapp.WSGIApplication([
   ('/api/deletemocklist/', DeleteMockList),
   ('/api/manualupload/', ManualUpload),
   ('/signin/', SignIn),
+  ('/admin/updatemodel/', UpdateModel),
+  ('/admin/processvisits/', ProcessVisits),
   ('/', MainPage),
 ], debug=False)
 

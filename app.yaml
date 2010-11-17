@@ -11,5 +11,9 @@ handlers:
 - url: /s
   static_dir: files
 
+- url: /admin/.*
+  script: main.py
+  login: admin
+
 - url: /.*
   script: main.py

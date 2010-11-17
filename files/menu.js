@@ -38,11 +38,11 @@ function Menu(mocklist, user) {
   // Sharing bar (left side).
   this.node_share_ = createElement('div', 'sharebar', document.body);
 
-  // TODO: Defer this until after page load.
   this.node_tweet_ = createElement('div', '', this.node_share_);
   this.node_tweet_.innerHTML = '<a href="http://twitter.com/share" class="twitter-share-button" data-text="I liked this gallery on dropmocks:" data-count="none">Share on Twitter</a>';
 
   var twitter_script = document.createElement('script');
+  twitter_script.async = true;
   twitter_script.src = 'http://platform.twitter.com/widgets.js';
   twitter_script.defer = true;
   this.node_share_.appendChild(twitter_script);
@@ -85,10 +85,10 @@ Menu.prototype.update_ = function() {
 
   if (this.signed_in_ || this.page_mocklist_.key) {
     setText(this.node_new_, 'New');
-    this.node_sign_.style.display = 'inline-block';
+    // this.node_sign_.style.display = 'inline-block';
   } else {
     setText(this.node_new_, 'Create a DropMocks gallery');
-    this.node_sign_.style.display = 'none';
+    // this.node_sign_.style.display = 'none';
   }
 
   this.node_menu_.options.length = 1;
@@ -99,7 +99,7 @@ Menu.prototype.update_ = function() {
     this.node_menu_.options[this.node_menu_.length] = opt;
   }
 
-  this.node_menu_.style.display = (this.mocklists_.length) ? 'inline-block' : 'none';
+  // this.node_menu_.style.display = (this.mocklists_.length) ? 'inline-block' : 'none';
 }
 
 Menu.prototype.menuChanged_ = function() {

@@ -12,7 +12,6 @@ function MockList(id, key, name) {
 
   this.selected_ = null;
   this.listeners_ = [];
-
   // A public identifier unique to this mocklist.
   this.id = id;
 
