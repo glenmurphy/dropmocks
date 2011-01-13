@@ -11,12 +11,19 @@ function Editor(mocklist) {
 
   var delete_button = createElement('div', 'delete', this.node_title_);
   addEventListener(delete_button, 'click', this.titleDeleteClicked_.bind(this));
+  var minimize_button = createElement('div', 'minimize', this.node_title_);
+  addEventListener(minimize_button, 'click', this.titleClicked_.bind(this));
 
   addEventListener(this.node_name_, 'click', this.nameClicked_.bind(this));
   this.node_body_ = createElement('div', 'body', this.node_);
   this.node_filelist_ = createElement('div', 'filelist', this.node_body_);
 
   this.node_insert_ = createElement('div', 'insert-indicator', this.node_);
+  
+  this.node_access_url_ = createElement('div', 'access-url', this.node_body_);
+  this.node_access_url_.style.display = 'none';
+  //this.node_hider_ = createElement('div', 'hider', this.node_body_);
+  //setText(this.node_hider_, "Hide editor");
 
   // Sometimes we have to do things (such as get a mocklist id and key)
   // before we can send the file.
@@ -40,7 +47,7 @@ function Editor(mocklist) {
   }
 
   this.node_status_ = createElement('div', 'dm-editor-status hidden', document.body);
-  
+
   addEventListener(document.body, 'dragover', this.dragOver_.bind(this));
   addEventListener(document.body, 'dragenter', this.dragEnter_.bind(this));
   addEventListener(document.body, 'dragleave', this.dragLeave_.bind(this));
@@ -340,9 +347,8 @@ Editor.prototype.fileDropped = function(e) {
 }
 
 Editor.prototype.showAccessURL_ = function(url) {
-  if (!this.node_access_url_)
-    this.node_access_url_ = createElement('div', 'access-url', this.node_body_);
-
+  this.node_access_url_.style.display = 'block';
+  
   //var full_url = window.location.protocol + '//' + window.location.host + url
   var full_url = 'http://dropmocks.com' + url;
   this.node_access_url_.innerHTML = 'Share this URL: <a href="' + full_url + '">' + full_url + '</a>';

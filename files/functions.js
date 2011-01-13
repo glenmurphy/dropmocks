@@ -14,10 +14,18 @@ Function.prototype.bind = function(thisObj, var_args) {
 
 function createElement(type, className, parent) {
   var el = document.createElement(type);
-  document.
   el.className = className;
   if (parent) parent.appendChild(el);
   return el;
+}
+
+function getPosition(obj) {
+  var pos = {x : 0, y : 0}
+  do {
+    pos.x += obj.offsetLeft;
+    pos.y += obj.offsetTop;
+  } while (obj = obj.offsetParent);
+  return pos;
 }
 
 function min(a, b) { return (a < b) ? a : b; }

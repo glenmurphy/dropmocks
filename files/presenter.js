@@ -16,7 +16,7 @@ Presenter.SPACING = 250;
 Presenter.SELECTED_OVERLAP = 50;
 Presenter.SMALL_WIDTH = 240;
 Presenter.SMALL_HEIGHT = 240;
-Presenter.MIN_EDGE_SPACING = 35;
+Presenter.MIN_EDGE_SPACING = 40;
 
 Presenter.scale = function(node, scale) {
   if (BrowserDetect.browser == "Explorer" && BrowserDetect.version <= 8) {
@@ -69,7 +69,7 @@ Presenter.prototype.mockListListener = function(e) {
 Presenter.prototype.createNode_ = function(mock) {
   // This probably causes layout.
   var cx = this.node_.offsetWidth / 2;
-  var cy = this.node_.offsetHeight / 2 - Presenter.MIN_EDGE_SPACING / 2;
+  var cy = this.node_.offsetHeight / 2;
   
   var mock_node = createElement('div', 'mocknode');
   addEventListener(mock_node, 'click', this.imageClicked_.bind(this, mock));
@@ -98,8 +98,8 @@ Presenter.prototype.createNode_ = function(mock) {
   
   mock_node.thumb.natural_width = mock.thumb.width;
   mock_node.thumb.natural_height = mock.thumb.height;
-  mock_node.thumb.width = mock.thumb.width;
-  mock_node.thumb.height = mock.thumb.height;
+  //mock_node.thumb.width = mock.thumb.width;
+  //mock_node.thumb.height = mock.thumb.height;
   mock_node.thumb.style.top = -parseInt(mock.thumb.height / 2);
   mock_node.thumb.style.left = -parseInt(mock.thumb.width / 2);
   Presenter.scale(mock_node.thumb, 0.1);
@@ -158,7 +158,7 @@ Presenter.prototype.orderNodes_ = function() {
 Presenter.prototype.layout = function() {
   var selected = this.mocklist_.getSelected();
   var cx = this.node_.offsetWidth / 2;
-  var cy = this.node_.offsetHeight / 2 - Presenter.MIN_EDGE_SPACING / 2;
+  var cy = this.node_.offsetHeight / 2;
   var max_width = this.node_.offsetWidth - Presenter.MIN_EDGE_SPACING * 2;
   var max_height = this.node_.offsetHeight - Presenter.MIN_EDGE_SPACING * 2;
   var x = 0;

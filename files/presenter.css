@@ -8,8 +8,8 @@
 }
 .presentation ::selection { background: transparent; }
 .scene {
-  position:absolute;
   -webkit-transition:all 0.3s;
+  position:absolute;
   -moz-transition:all 0.3s;
 }
 .mocknode {
@@ -42,12 +42,12 @@
   position:absolute;
 }
 .mocknode .thumb {
+  -webkit-transition:all 0.3s;
+  -moz-transition:all 0.3s;
   position:absolute;
   opacity:0.5;
   filter: alpha(opacity=50)
           progid:DXImageTransform.Microsoft.Blur(pixelradius=7);
-  -webkit-transition:all 0.3s;
-  -moz-transition:all 0.3s;
   border:1px solid transparent;
 }
 

@@ -19,6 +19,8 @@ function Mock(mocklist) {
 Mock.EVENT_LOADED = 0;
 Mock.EVENT_UPLOADED = 1;
 Mock.EVENT_DELETED = 2;
+Mock.EVENT_UPLOAD_START = 3;
+Mock.EVENT_UPLOAD_PROGRESS = 4;
 
 Mock.unknownFileCount = 1;
 Mock.generateUnknownFileName = function() {
@@ -130,6 +132,7 @@ Mock.blurImage = function(image, amount, width, height) {
   // Firefox 3 fails at putImageData - I suspect the blur 
   // algorithm may be to blame, however (clamping dstPixels
   // causes all sorts of tomfoolery).
+
   if (isValidBrowser() && BrowserDetect.version >= 4) {
     // Create the canvas.
     var canvas = document.createElement('canvas');
@@ -149,16 +152,21 @@ Mock.blurImage = function(image, amount, width, height) {
         scaled_width, scaled_height);
 
     // Blur the image.
+
+    // Blurring is horked by fast image serving.
     var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     img = Mock.blur(img, amount);
     ctx.putImageData(img, 0, 0);
-
+    return canvas;
+    /*
     // Export the image.
     var new_image = new Image();
     new_image.src = canvas.toDataURL();
     canvas = null;
     return new_image;
+    */
   }
+
   window.console.log("Blurring failed");
   var img = new Image();
   img.src = image.src;
@@ -210,6 +218,10 @@ Mock.prototype.setID = function(id) {
   this.id = id;
 }
 
+Mock.prototype.setServingURL = function(url) {
+  this.serving_url = url;
+}
+
 Mock.prototype.setName = function(name) {
   this.name = name;
 }
@@ -245,61 +257,81 @@ Mock.prototype.loadLocalFileComplete_ = function(e) {
 
 Mock.prototype.loadImageComplete_ = function(e) {
   window.console.log("Load mock complete");
-  this.generateThumb_();
+  setTimeout(this.generateThumb_.bind(this), 1);
 }
 
 Mock.prototype.generateThumb_ = function() {
   this.thumb = Mock.blurImage(this.image, 7, 240, 240);
 
-  // Similar to loadFileComplete, we need to give the image time to
-  // do whatever it does before going off and using it, otherwise it
-  // will give strange results for image.width etc.
-  /*
-  if (this.thumb.src.length < 600 && this.thumb_attempts_ < 3) {
-    window.console.log("Failed thumbnailing attempt");
-    this.thumb_attempts_++;
-    setTimeout(this.generateThumb_.bind(this), 1);
-  } else {
-  */
   this.loaded = true;
   window.console.log("Thumbnail generation complete");
   setTimeout(this.callListeners_.bind(this, {
     type : Mock.EVENT_LOADED,
     data : this
   }), 1);
-}
-
+};
 
 // SAVING
 Mock.prototype.saveFile_ = function() {
   if (!this.file_ || this.id) return;
   window.console.log("Saving '" + this.name + "' ...");
 
+  // Modern browsers.
   var req = new XMLHttpRequest();
-  req.open("POST", MockList.URL_FILE_UPLOAD + 
-      '?id=' + this.mocklist_.id + 
-      '&key=' + this.mocklist_.key +
-      '&filename=' + this.name
-      , true);
-  req.upload.addEventListener("progress", this.saveFileProgress_.bind(this), false);
-  req.upload.addEventListener("load", this.saveFileComplete_.bind(this), false);
-  req.upload.addEventListener("error", this.saveFileError_.bind(this), false);
-  req.onreadystatechange = this.saveFileResult_.bind(this, req);
-
+ 
   if (typeof FormData != 'undefined') {
-    var form_data = new FormData();
-    form_data.append('file', this.file_);
-    req.send(form_data);
+    req.open("GET", MockList.URL_GET_UPLOAD_URL +
+        '?id=' + this.mocklist_.id +
+        '&key=' + this.mocklist_.key +
+        '&filename=' + this.name, true);
+    req.onreadystatechange = this.getUploadURLResult_.bind(this, req);
+    req.send();
   } else {
     // Firefox3
+    req.open("POST", MockList.URL_FILE_UPLOAD  +
+        '?id=' + this.mocklist_.id +
+        '&key=' + this.mocklist_.key +
+        '&filename=' + this.name, true);
+    req.upload.addEventListener("progress", this.saveFileProgress_.bind(this), false);
+    req.upload.addEventListener("load", this.saveFileComplete_.bind(this), false);
+    req.upload.addEventListener("error", this.saveFileError_.bind(this), false);
+    req.onreadystatechange = this.saveFileResult_.bind(this, req);
+    
     var reader = new FileReader();
     reader.onerror = function(e) {window.console.log("File read error");}
     reader.onload = function(e) {
       window.console.log("File data loaded, uploading...");
       req.sendAsBinary(e.target.result);
     }
-    reader.readAsBinaryString(this.file_);   
+    reader.readAsBinaryString(this.file_);
   }
+  this.callListeners_({
+    type : Mock.EVENT_UPLOAD_START
+  });
+};
+
+
+Mock.prototype.getUploadURLResult_ = function(req) {
+  if (req.readyState == 4 && req.status == 200) {
+    var data = JSON.parse(req.responseText);
+    window.console.log("Got url:" + data.url);
+    this.uploadFile_(data.url);
+  }
+};
+
+Mock.prototype.uploadFile_ = function(url) {
+  window.console.log("Uploading to " + url);
+  url = url ? url : MockList.URL_FILE_UPLOAD;
+  var req = new XMLHttpRequest();
+  req.open("POST", url, true);
+  req.upload.addEventListener("progress", this.saveFileProgress_.bind(this), false);
+  req.upload.addEventListener("load", this.saveFileComplete_.bind(this), false);
+  req.upload.addEventListener("error", this.saveFileError_.bind(this), false);
+  req.onreadystatechange = this.saveFileResult_.bind(this, req);
+
+  var form_data = new FormData();
+  form_data.append('file', this.file_);
+  req.send(form_data);
 }
 
 Mock.prototype.saveFileProgress_ = function(e) {
@@ -309,7 +341,7 @@ Mock.prototype.saveFileProgress_ = function(e) {
   window.console.log(percent);
 
   this.callListeners_({
-    type : Mock.EVENT_PROGRESS,
+    type : Mock.EVENT_UPLOAD_PROGRESS,
     data : percent
   });
 }
@@ -318,7 +350,7 @@ Mock.prototype.saveFileComplete_ = function(e) {
   window.console.log("File upload complete");
 
   this.callListeners_({
-    type : Mock.EVENT_PROGRESS,
+    type : Mock.EVENT_UPLOAD_PROGRESS,
     data : 100
   });
 }

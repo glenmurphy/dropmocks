@@ -4,11 +4,15 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
+from google.appengine.api import images
 from google.appengine.api import users
 from google.appengine.api import memcache
+from google.appengine.ext import blobstore
+from google.appengine.ext.webapp import blobstore_handlers
 from django.utils import simplejson
 import random
 import datetime
+import urllib
 
 # FUNCTIONS -------------------------------------------------------------------
 import string
@@ -79,6 +83,8 @@ class Mock(db.Model):
   mimetype = db.StringProperty(multiline=False)
   mocklist = db.ReferenceProperty(MockList)
   date = db.DateTimeProperty(auto_now_add=True)
+  blob_key = blobstore.BlobReferenceProperty()
+  serving_url = db.StringProperty()
 
   def get_id(self):
     return id_encode(self.key().id())
@@ -215,30 +221,27 @@ class ViewMock(webapp.RequestHandler):
   def get(self, id):
     mock = dbMock(id)
 
-    """
-    referer = self.request.headers.get("Referer")
-    if referer:
-      referer = referer.split("/")
-      if len(referer) >= 2:
-        referer = referer[2]    
-
-    host = self.request.url.split("/")[2]
-    if (referer != host):
-      self.redirect('http://' + host + '/m' + mock.mocklist.get_id())
-      return
-    """
-
     if mock.mimetype:
       self.response.headers['Content-Type'] = mock.mimetype
     else:
       self.response.headers['Content-Type'] = 'image/png'
-    self.response.out.write(mock.data)
+  
+    if mock.data:
+      self.response.out.write(mock.data)
+    elif mock.blob_key:
+      blob_reader = blobstore.BlobReader(mock.blob_key)
+      self.response.out.write(str(blob_reader.read()))
+      # self.redirect(mock.serving_url)
+      # self.redirect(mock.serving_url = images.get_serving_url(str(blob_info.key()), 800))
 
-class SaveMock(webapp.RequestHandler):
+class UploadMock(blobstore_handlers.BlobstoreUploadHandler):
   def post(self):
     id = self.request.get('id')
     edit_key = self.request.get('key')
     filename = self.request.get('filename')
+
+    import logging
+    logging.info(filename)
 
     mocklist = dbMockList(id)
     if mocklist.edit_key != edit_key:
@@ -249,15 +252,57 @@ class SaveMock(webapp.RequestHandler):
     mock.name = filename
     if self.request.POST:
       # FormData
-      image_file = self.request.POST['file']
-      mock.mimetype = image_file.type
-      mock.data = db.Blob(image_file.value)
+      upload_files = self.get_uploads('file')  # 'file' is file upload field in the form
+      blob_info = upload_files[0]
+      mock.blob_key = blob_info.key()
+      image = images.Image(blob_key=str(blob_info.key()))
+      image.horizontal_flip()
+      image.execute_transforms()
+      
+      if image.width > 1280:
+        mock.serving_url = images.get_serving_url(str(blob_info.key()), 1280)
+      else:
+        mock.serving_url = images.get_serving_url(str(blob_info.key()))
     else:
       # Firefox3
       mock.data = self.request.body
     mock.mocklist = mocklist
     mock.put()
 
+    self.redirect("/api/uploaded/?id=%s" % mock.get_id())
+
+class UploadedResult(webapp.RequestHandler):
+  def get(self):
+    self.response.out.write(simplejson.dumps({
+      'id' : str(self.request.get('id'))
+    }))
+
+class GetUploadURL(webapp.RequestHandler):
+  def get(self):
+    id = self.request.get('id')
+    edit_key = self.request.get('key')
+    filename = self.request.get('filename')
+
+    self.response.out.write(simplejson.dumps({
+      'url' : blobstore.create_upload_url('/upload/?id=%s&key=%s&filename=%s' % (id, edit_key, urllib.quote(filename)))
+    }))
+    
+class SaveMockFF3(webapp.RequestHandler):
+  def post(self):
+    id = self.request.get('id')
+    edit_key = self.request.get('key')
+    filename = self.request.get('filename')
+
+    mocklist = dbMockList(id)
+    if mocklist.edit_key != edit_key:
+      self.response.out.write('invalid edit key')
+      return
+    
+    mock = Mock()
+    mock.name = filename
+    mock.data = self.request.body
+    mock.mocklist = mocklist
+    mock.put()
     self.response.out.write(simplejson.dumps({
       'id' : str(mock.get_id())
     }))
@@ -337,6 +382,15 @@ class DeleteMockList(webapp.RequestHandler):
         mock.delete()
       mocklist.delete()
       self.response.out.write('{"success":true}')
+
+class DeleteManual(webapp.RequestHandler):
+  def get(self, id):
+    mocklist = dbMockList(id)
+    q = Mock.gql("WHERE mocklist = :1", (mocklist)).fetch(1000)
+    for mock in q:
+      mock.delete()
+    mocklist.delete()
+    self.response.out.write('{"success":true}')    
 
 class ManualUpload(webapp.RequestHandler):
   def post(self):
@@ -465,8 +519,11 @@ class ProcessVisits(webapp.RequestHandler):
 application = webapp.WSGIApplication([
   (r'/m(.*)', View),
   (r'/i(.*)', ViewMock),
+  ('/upload/', UploadMock),
   ('/api/getid/', GetID),
-  ('/api/savemock/', SaveMock),
+  ('/api/getuploadurl/', GetUploadURL),
+  ('/api/uploaded/', UploadedResult),
+  ('/api/savemockff3/', SaveMockFF3),
   ('/api/deletemock/', DeleteMock),
   ('/api/savemocklist/', SaveMockList),
   ('/api/getmocklists/', GetMockLists),
@@ -475,6 +532,7 @@ application = webapp.WSGIApplication([
   ('/signin/', SignIn),
   ('/admin/updatemodel/', UpdateModel),
   ('/admin/processvisits/', ProcessVisits),
+  (r'/admin/delete/m(.*)', DeleteManual),
   ('/', MainPage),
 ], debug=False)
 

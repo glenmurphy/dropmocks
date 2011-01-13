@@ -49,7 +49,8 @@ MockList.REORDER_BEFORE = 21;
 MockList.REORDER_AFTER = 22;
 
 MockList.URL_GETID = '/api/getid/';
-MockList.URL_FILE_UPLOAD = '/api/savemock/';
+MockList.URL_FILE_UPLOAD = '/api/savemockff3/';
+MockList.URL_GET_UPLOAD_URL = '/api/getuploadurl/';
 MockList.URL_FILE_DELETE = '/api/deletemock/';
 MockList.URL_SAVE = '/api/savemocklist/';
 MockList.URL_MOCK = '/i'; // no trailing slash
@@ -168,7 +169,11 @@ MockList.prototype.newLocalFiles = function(files, dropmock, order) {
 
   // Verify that they're images and add the files.
   for (var i = 0, file; file = files[i]; i++) {
-    if (MockList.isImage(file) && file.size < 900000) {
+    var max_size = 950000;
+    if (typeof FormData != 'undefined') {
+      max_size = 3000000;
+    }
+    if (MockList.isImage(file) && file.size < max_size) {
       var mock = new Mock(this);
       mock.setFile(file);
       new_mocks.push(mock);
@@ -177,8 +182,12 @@ MockList.prototype.newLocalFiles = function(files, dropmock, order) {
       var error = '';
       if (!MockList.isImage(file))
         error = "not an image";
-      else if (file.size >= 900000)
-        error = "exceeds 900KB";
+      else if (file.size >= max_size) {
+        error = "xceeds "+(max_size/1000000)+" MB";
+        if (typeof FormData == 'undefined') {
+          error = "exceeds your browser's upload limit."
+        }
+      }
       errors.push(file.name + ' (' + error + ')');
     }
   }
